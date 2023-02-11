@@ -54,11 +54,10 @@ def process_filters(filters_input):
     return filters, display_filters, applied_filters
 
 
-
 # Our main query route.  Accepts POST (via the Search box) and GETs via the clicks on aggregations/facets
 @bp.route('/query', methods=['GET', 'POST'])
 def query():
-    opensearch = get_opensearch() # Load up our OpenSearch client from the opensearch.py file.
+    opensearch = get_opensearch()  # Load up our OpenSearch client from the opensearch.py file.
     # Put in your code to query opensearch.  Set error as appropriate.
     error = None
     user_query = None
@@ -110,46 +109,77 @@ def query():
 
 def create_query(user_query, filters, sort="_score", sortDir="desc"):
     print("Query: {} Filters: {} Sort: {}".format(user_query, filters, sort))
+    #### Step 4.b.i: create the appropriate query and aggregations here
     query_obj = {
         'size': 10,
         "query": {
-            "query_string": {
-                "fields": [ "name", "shortDescription", "longDescription", "department" ],
-                "phrase_slop": 3,
-                "query": user_query
-            } 
+            "function_score": {
+                "query": {
+                    "bool": {
+                        "must": [
+                            {
+                                "query_string": {
+                                    "query": user_query,
+                                    "fields": ["name", "shortDescription", "longDescription"],
+                                    "phrase_slop": 3
+                                }
+                            }
+                        ],
+                    }
+                },
+                "boost_mode": "replace",
+                "score_mode": "avg",
+                "functions": [
+                    {
+                        "field_value_factor": {
+                            "field": "salesRankShortTerm",
+                            "factor": 1,
+                            "missing": 100000000,
+                            "modifier": "reciprocal"
+
+                        }
+                    },
+                    {
+                        "field_value_factor": {
+                            "field": "salesRankMediumTerm",
+                            "factor": 2,
+                            "missing": 100000000,
+                            "modifier": "reciprocal"
+
+                        }
+                    },
+                    {
+                        "field_value_factor": {
+                            "field": "salesRankLongTerm",
+                            "factor": 3,
+                            "missing": 100000000,
+                            "modifier": "reciprocal"
+
+                        }
+                    }
+                ]
+            }
+
         },
         "aggs": {
-            "regularPrice": {
-                "range": {
-                    "field": "regularPrice",
-                    "ranges": [
-                        { "to": 150.0 },
-                        { "from": 150.0, "to": 300.0 }, 
-                        { "from": 300.0 }
-                    ]
-                }
+            "missing_images": {
+                "missing": {"field": "image.keyword"}
             },
             "department": {
-                "terms": {
-                    "field": "department.keyword"
-                }
+                "terms": {"field": "department.keyword"}
             },
-            "missing_images": {
-                "missing": {
-                    "field": "image"
-                }
+            "regularPrice": {
+                "range": {"field": "regularPrice",
+                          "ranges": [
+                              {"from": 0.0, "to": 5.0},
+                              {"from": 5.0, "to": 10.0},
+                              {"from": 10.0, "to": 25.0},
+                              {"from": 25.0, "to": 100.0},
+                              {"from": 100.0, "to": 1000.0},
+                              {"from": 1000.0, "to": 10000.0}
+                          ]}
             }
         },
-        "sort": [
-            { 
-                "regularPrice": { "order": sortDir }
-            },
-            {
-                "name.keyword": { "order": sortDir }
-            },
-            # sort
-        ],
         "highlight": {
             "fields": {
                 "name": {},
@@ -157,6 +187,9 @@ def create_query(user_query, filters, sort="_score", sortDir="desc"):
                 "longDescription": {}
             }
         },
+        "sort": [
+            {sort: {"order": sortDir}}
+        ]
     }
     if filters:
         query_obj['query'] = {
