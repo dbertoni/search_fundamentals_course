@@ -1,5 +1,225 @@
 {
   "settings": {
     "index.refresh_interval": "5s"
+  },
+  "mappings": {
+    "properties": {
+      "accessories": {
+        "type": "text"
+      },
+      "active": {
+        "type": "text"
+      },
+      "artistName": {
+        "type": "text"
+      },
+      "bestBuyItemId": {
+        "type": "text"
+      },
+      "bestSellingRank": {
+        "type": "text"
+      },
+      "categoryLeaf": {
+        "type": "text"
+      },
+      "categoryPath": {
+        "type": "text"
+      },
+      "categoryPathCount": {
+        "type": "float"
+      },
+      "categoryPathIds": {
+        "type": "text"
+      },
+      "class": {
+        "type": "text"
+      },
+      "classId": {
+        "type": "text"
+      },
+      "color": {
+        "type": "text"
+      },
+      "condition": {
+        "type": "text"
+      },
+      "customerReviewAverage": {
+        "type": "text"
+      },
+      "customerReviewCount": {
+        "type": "text"
+      },
+      "department": {
+        "type": "text",
+        "fielddata": true,
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256
+          }
+        }
+      },
+      "departmentId": {
+        "type": "text"
+      },
+      "depth": {
+        "type": "text"
+      },
+      "digital": {
+        "type": "text"
+      },
+      "features": {
+        "type": "text"
+      },
+      "frequentlyPurchasedWith": {
+        "type": "text"
+      },
+      "height": {
+        "type": "text"
+      },
+      "homeDelivery": {
+        "type": "text"
+      },
+      "image": {
+        "type": "text",
+        "fielddata": true
+      },
+      "inStoreAvailability": {
+        "type": "text"
+      },
+      "inStorePickup": {
+        "type": "text"
+      },
+      "longDescription": {
+        "type": "text",
+        "analyzer": "english",
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256
+          }
+        }
+      },
+      "longDescriptionHtml": {
+        "type": "text"
+      },
+      "manufacturer": {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256
+          }
+        }
+      },
+      "modelNumber": {
+        "type": "text"
+      },
+      "name": {
+        "type": "text",
+        "analyzer": "english",
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256
+          }
+        }
+      },
+      "onSale": {
+        "type": "text"
+      },
+      "onlineAvailability": {
+        "type": "text"
+      },
+      "productId": {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256
+          }
+        }
+      },
+      "quantityLimit": {
+        "type": "text"
+      },
+      "regularPrice": {
+        "type": "float"
+      },
+      "relatedProducts": {
+        "type": "text"
+      },
+      "releaseDate": {
+        "type": "date"
+      },
+      "salePrice": {
+        "type": "float"
+      },
+      "salesRankLongTerm": {
+        "type": "text"
+        
+      },
+      "salesRankMediumTerm": {
+        "type": "text"
+      },
+      "salesRankShortTerm": {
+        "type": "text"
+      },
+      "shippingCost": {
+        "type": "float"
+      },
+      "shippingWeight": {
+        "type": "float"
+      },
+      "shortDescription": {
+        "type": "text",
+        "analyzer": "english",
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256
+          }
+        }
+      },
+      "shortDescriptionHtml": {
+        "type": "text"
+      },
+      "sku": {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256
+          }
+        }
+      },
+      "startDate": {
+        "type": "date"
+      },
+      "subclass": {
+        "type": "text"
+      },
+      "subclassId": {
+        "type": "text"
+      },
+      "type": {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256
+          }
+        }
+      },
+      "url": {
+        "type": "text"
+      },
+      "weight": {
+        "type": "text"
+      },
+      "width": {
+        "type": "text"
+      }
+    }
   }
 }

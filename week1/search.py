@@ -94,10 +94,11 @@ def query():
     print("query obj: {}".format(query_obj))
 
     #### Step 4.b.ii
-    response = None   # TODO: Replace me with an appropriate call to OpenSearch
+    response = opensearch.search(query_obj)   # TODO: Replace me with an appropriate call to OpenSearch
     # Postprocess results here if you so desire
-
-    #print(response)
+    
+        
+    print(response)
     if error is None:
         return render_template("search_results.jinja2", query=user_query, search_response=response,
                                display_filters=display_filters, applied_filters=applied_filters,
@@ -111,11 +112,47 @@ def create_query(user_query, filters, sort="_score", sortDir="desc"):
     query_obj = {
         'size': 10,
         "query": {
-            "match_all": {} # Replace me with a query that both searches and filters
+            "query_string": {
+                "fields": [ "name", "shortDescription", "longDescription" ],
+                "phrase_slop": 3,
+                "query": user_query
+            } 
         },
         "aggs": {
-            #### Step 4.b.i: create the appropriate query and aggregations here
-
-        }
+            "regularPrice": {
+                "range": {
+                    "field": "regularPrice",
+                    "ranges": [
+                        { "to": 150 },
+                        { "from": 150, "to": 300 },
+                        { "from": 300 }
+                    ]
+                }
+            },
+            "department": {
+                "terms": {
+                    "field": "department"
+                }
+            },
+            "missing_images": {
+                "missing": {
+                    "field": "image"
+                }
+            }
+        },
+        "highlight": {
+            "fields": {
+                "name": {},
+                "shortDescription": {},
+                "longDescription": {}
+            }
+        },
+    }
+    if filters:
+        query_obj['query'] = {
+            "bool": {
+                "must": [query_obj['query']],
+                "filter": filters
+            }
     }
     return query_obj

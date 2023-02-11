@@ -85,7 +85,15 @@ def get_opensearch():
     port = 9200
     auth = ('admin', 'admin')
     #### Step 2.a: Create a connection to OpenSearch
-    client = None
+    client = OpenSearch(
+        hosts=[{'host': host, 'port': port}],
+        http_compress=True,  # enables gzip compression for request bodies
+        http_auth=auth,
+        use_ssl=True,
+        verify_certs=False,
+        ssl_assert_hostname=False,
+        ssl_show_warn=False
+    )
     return client
 
 
@@ -107,9 +115,18 @@ def index_file(file, index_name):
         if 'productId' not in doc or len(doc['productId']) == 0:
             continue
         #### Step 2.b: Create a valid OpenSearch Doc and bulk index 2000 docs at a time
-        the_doc = None
+        the_doc = {
+            '_index': index_name,
+            "_source": doc 
+        }
         docs.append(the_doc)
-
+        if len(docs) == 2000:
+            bulk(client, docs)
+            docs_indexed += len(docs) 
+            docs = []
+    if len(docs) > 0:
+        bulk(client, docs)
+        docs_indexed += len(docs)        
     return docs_indexed
 
 @click.command()
