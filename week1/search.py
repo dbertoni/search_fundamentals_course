@@ -113,60 +113,27 @@ def create_query(user_query, filters, sort="_score", sortDir="desc"):
     query_obj = {
         'size': 10,
         "query": {
-            "function_score": {
-                "query": {
-                    "bool": {
-                        "must": [
-                            {
-                                "query_string": {
-                                    "query": user_query,
-                                    "fields": ["name", "shortDescription", "longDescription"],
-                                    "phrase_slop": 3
-                                }
-                            }
-                        ],
-                    }
-                },
-                "boost_mode": "replace",
-                "score_mode": "avg",
-                "functions": [
-                    {
-                        "field_value_factor": {
-                            "field": "salesRankShortTerm",
-                            "factor": 1,
-                            "missing": 100000000,
-                            "modifier": "reciprocal"
-
-                        }
-                    },
-                    {
-                        "field_value_factor": {
-                            "field": "salesRankMediumTerm",
-                            "factor": 2,
-                            "missing": 100000000,
-                            "modifier": "reciprocal"
-
-                        }
-                    },
-                    {
-                        "field_value_factor": {
-                            "field": "salesRankLongTerm",
-                            "factor": 3,
-                            "missing": 100000000,
-                            "modifier": "reciprocal"
-
-                        }
-                    }
-                ]
-            }
-
+            "query_string": {
+                "fields": [ "name", "shortDescription", "longDescription", "department" ],
+                "phrase_slop": 3,
+                "query": user_query
+            } 
         },
         "aggs": {
-            "missing_images": {
-                "missing": {"field": "image.keyword"}
+            "regularPrice": {
+                "range": {
+                    "field": "regularPrice",
+                    "ranges": [
+                        { "to": 150.0 },
+                        { "from": 150.0, "to": 300.0 }, 
+                        { "from": 300.0 }
+                    ]
+                }
             },
             "department": {
-                "terms": {"field": "department.keyword"}
+                "terms": {
+                    "field": "department.keyword"
+                }
             },
             "regularPrice": {
                 "range": {"field": "regularPrice",
@@ -180,6 +147,15 @@ def create_query(user_query, filters, sort="_score", sortDir="desc"):
                           ]}
             }
         },
+        "sort": [
+            { 
+                "regularPrice": { "order": sortDir }
+            },
+            {
+                "name.keyword": { "order": sortDir }
+            },
+            # sort
+        ],
         "highlight": {
             "fields": {
                 "name": {},
