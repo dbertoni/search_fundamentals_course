@@ -117,12 +117,15 @@
       },
       "name": {
         "type": "text",
-        "analyzer": "english",
         "fields": {
-          "keyword": {
-            "type": "keyword",
-            "ignore_above": 256
-          }
+            "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+            },
+            "stemmed": {
+                "type": "text",
+                "analyzer": "english"
+            }
         }
       },
       "onSale": {
@@ -163,7 +166,14 @@
         "type": "text"
       },
       "salesRankShortTerm": {
-        "type": "text"
+        "type": "text",
+        "fielddata": true,
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256
+          }
+        }
       },
       "shippingCost": {
         "type": "float"

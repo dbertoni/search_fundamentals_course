@@ -94,11 +94,12 @@ def query():
     print("query obj: {}".format(query_obj))
 
     #### Step 4.b.ii
-    response = opensearch.search(query_obj)   # TODO: Replace me with an appropriate call to OpenSearch
+    # TODO: Replace me with an appropriate call to OpenSearch
+    response = opensearch.search(query_obj)   
     # Postprocess results here if you so desire
     
         
-    print(response)
+    # print(response)
     if error is None:
         return render_template("search_results.jinja2", query=user_query, search_response=response,
                                display_filters=display_filters, applied_filters=applied_filters,
@@ -113,7 +114,7 @@ def create_query(user_query, filters, sort="_score", sortDir="desc"):
         'size': 10,
         "query": {
             "query_string": {
-                "fields": [ "name", "shortDescription", "longDescription" ],
+                "fields": [ "name", "shortDescription", "longDescription", "department" ],
                 "phrase_slop": 3,
                 "query": user_query
             } 
@@ -123,15 +124,15 @@ def create_query(user_query, filters, sort="_score", sortDir="desc"):
                 "range": {
                     "field": "regularPrice",
                     "ranges": [
-                        { "to": 150 },
-                        { "from": 150, "to": 300 },
-                        { "from": 300 }
+                        { "to": 150.0 },
+                        { "from": 150.0, "to": 300.0 }, 
+                        { "from": 300.0 }
                     ]
                 }
             },
             "department": {
                 "terms": {
-                    "field": "department"
+                    "field": "department.keyword"
                 }
             },
             "missing_images": {
@@ -140,6 +141,15 @@ def create_query(user_query, filters, sort="_score", sortDir="desc"):
                 }
             }
         },
+        "sort": [
+            { 
+                "regularPrice": { "order": sortDir }
+            },
+            {
+                "name.keyword": { "order": sortDir }
+            },
+            # sort
+        ],
         "highlight": {
             "fields": {
                 "name": {},
