@@ -8,7 +8,7 @@ from flask import (
 from week1.opensearch import get_opensearch
 
 bp = Blueprint('search', __name__, url_prefix='/search')
-
+import json
 
 # Process the filters requested by the user and return a tuple that is appropriate for use in: the query, URLs displaying the filter and the display of the applied filters
 # filters -- convert the URL GET structure into an OpenSearch filter query
@@ -33,17 +33,18 @@ def process_filters(filters_input):
             if from_val:
                 to_from["gte"] = from_val
             else:
-                from_val = "*"  # set it to * for display purposes, but don't use it in the query
+                from_val != "*"  # set it to * for display purposes, but don't use it in the query
             if to_val:
                 to_from["lt"] = to_val
             else:
-                to_val = "*"  # set it to * for display purposes, but don't use it in the query
+                to_val != "*"  # set it to * for display purposes, but don't use it in the query
             the_filter = {"range": {filter: to_from}}
             filters.append(the_filter)
             display_filters.append("{}: {} TO {}".format(display_name, from_val, to_val))
             applied_filters += "&{}.from={}&{}.to={}".format(filter, from_val, filter, to_val)
         elif type == "terms":
             field = request.args.get(filter + ".fieldName", filter)
+            # field = field.replace(".keyword", "")
             key = request.args.get(filter + ".key", None)
             the_filter = {"term": {field: key}}
             filters.append(the_filter)
@@ -54,10 +55,11 @@ def process_filters(filters_input):
     return filters, display_filters, applied_filters
 
 
+
 # Our main query route.  Accepts POST (via the Search box) and GETs via the clicks on aggregations/facets
 @bp.route('/query', methods=['GET', 'POST'])
 def query():
-    opensearch = get_opensearch()  # Load up our OpenSearch client from the opensearch.py file.
+    opensearch = get_opensearch() # Load up our OpenSearch client from the opensearch.py file.
     # Put in your code to query opensearch.  Set error as appropriate.
     error = None
     user_query = None
@@ -90,13 +92,14 @@ def query():
     else:
         query_obj = create_query("*", [], sort, sortDir)
 
-    print("query obj: {}".format(query_obj))
+    print("query obj: \n{}".format(json.dumps(query_obj)))
 
     #### Step 4.b.ii
-    response = opensearch.search(query_obj,
-                                 index="bbuy_products")
+    # TODO: Replace me with an appropriate call to OpenSearch
+    response = opensearch.search(query_obj)   
     # Postprocess results here if you so desire
-
+    
+        
     # print(response)
     if error is None:
         return render_template("search_results.jinja2", query=user_query, search_response=response,
@@ -111,76 +114,43 @@ def create_query(user_query, filters, sort="_score", sortDir="desc"):
     query_obj = {
         'size': 10,
         "query": {
-            "function_score": {
-                "query": {
-                    "bool": {
-                        "must": [
-                            {
-                                "query_string": {
-                                    "query": user_query,
-                                    "fields": ["name", "shortDescription", "longDescription"],
-                                    "phrase_slop": 3
-                                }
-                            }
-                        ],
-                        "filter": filters
-                    }
-                },
-                "boost_mode": "replace",
-                "score_mode": "avg",
-                "functions": [
-                    {
-                        "field_value_factor": {
-                            "field": "salesRankShortTerm",
-                            "factor": 1,
-                            "missing": 100000000,
-                            "modifier": "reciprocal"
-
-                        }
-                    },
-                    {
-                        "field_value_factor": {
-                            "field": "salesRankMediumTerm",
-                            "factor": 2,
-                            "missing": 100000000,
-                            "modifier": "reciprocal"
-
-                        }
-                    },
-                    {
-                        "field_value_factor": {
-                            "field": "salesRankLongTerm",
-                            "factor": 3,
-                            "missing": 100000000,
-                            "modifier": "reciprocal"
-
-                        }
-                    }
-                ]
-            }
-
+            "query_string": {
+                "fields": [ "name", "shortDescription", "longDescription", "department" ],
+                "phrase_slop": 3,
+                "query": user_query
+            } 
         },
         "aggs": {
-            "missing_images": {
-                "missing": {"field": "image.keyword"}
+            "regularPrice": {
+                "range": {
+                    "field": "regularPrice",
+                    "ranges": [
+                        { "to": 150.0 },
+                        { "from": 150.0, "to": 300.0 }, 
+                        { "from": 300.0 }
+                    ]
+                }
             },
             "department": {
-                "terms": {"field": "department.keyword"}
+                "terms": {
+                    "field": "department.keyword"
+                }
             },
-            "regularPrice": {
-                "range": {"field": "regularPrice",
-                          "ranges": [
-                              {"from": 0.0, "to": 5.0},
-                              {"from": 5.0, "to": 10.0},
-                              {"from": 10.0, "to": 25.0},
-                              {"from": 25.0, "to": 100.0},
-                              {"from": 100.0, "to": 1000.0},
-                              {"from": 1000.0, "to": 10000.0}
-                          ]}
+            "missing_images": {
+                "missing": {
+                    "field": "image"
+                }
             }
-            #### Step 4.b.i: create the appropriate query and aggregations here
-
         },
+        "sort": [
+            { 
+                "regularPrice": { "order": sortDir }
+            },
+            {
+                "name.keyword": { "order": sortDir }
+            },
+            # sort
+        ],
         "highlight": {
             "fields": {
                 "name": {},
@@ -188,8 +158,12 @@ def create_query(user_query, filters, sort="_score", sortDir="desc"):
                 "longDescription": {}
             }
         },
-        "sort": [
-            {sort: {"order": sortDir}}
-        ]
+    }
+    if filters:
+        query_obj['query'] = {
+            "bool": {
+                "must": [query_obj['query']],
+                "filter": filters
+            }
     }
     return query_obj

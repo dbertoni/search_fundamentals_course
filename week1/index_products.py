@@ -88,12 +88,10 @@ def get_opensearch():
         hosts=[{'host': host, 'port': port}],
         http_compress=True,  # enables gzip compression for request bodies
         http_auth=auth,
-        # client_cert = client_cert_path,
-        # client_key = client_key_path,
         use_ssl=True,
         verify_certs=False,
         ssl_assert_hostname=False,
-        ssl_show_warn=False,
+        ssl_show_warn=False
     )
     return client
 
@@ -118,19 +116,16 @@ def index_file(file, index_name):
         #### Step 2.b: Create a valid OpenSearch Doc and bulk index 2000 docs at a time
         the_doc = {
             '_index': index_name,
-            '_id': doc["sku"][0],
-            '_source': doc
+            "_source": doc 
         }
         docs.append(the_doc)
         if len(docs) == 2000:
-            bulk(client=client, actions=docs, request_timeout=100)
+            bulk(client, docs)
+            docs_indexed += len(docs) 
             docs = []
-            docs_indexed += len(docs)
     if len(docs) > 0:
-        # In case of not mult of 2K and end of for
-        bulk(client=client, actions=docs, request_timeout=100)
-        docs_indexed += len(docs)
-
+        bulk(client, docs)
+        docs_indexed += len(docs)        
     return docs_indexed
 
 
