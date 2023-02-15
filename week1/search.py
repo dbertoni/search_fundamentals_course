@@ -111,6 +111,7 @@ def query():
 
 def create_query(user_query, filters, sort="_score", sortDir="desc"):
     print("Query: {} Filters: {} Sort: {}".format(user_query, filters, sort))
+    #### Step 4.b.i: create the appropriate query and aggregations here
     query_obj = {
         'size': 10,
         "query": {
