@@ -251,11 +251,11 @@
           "keyword": {
             "type": "keyword",
             "ignore_above": 2048
+          },
+          "hyphens": {
+            "type": "text",
+            "analyzer": "smarter_hyphens"
           }
-        },
-        "hyphens": {
-          "type": "text",
-          "analyzer": "smarter_hyphens"
         }
       },
       "suggest": {
@@ -267,7 +267,7 @@
           },
           "trigrams": {
             "type": "text",
-            "analyzer": "trigram_analyzer"
+            "analyzer": "trigram"
           }
         }
       },
